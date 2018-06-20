@@ -41,24 +41,6 @@ export async function makeMergedSchema() {
     link: BookingLink,
   });
 
-  const ContextLink = setContext((request, previousContext) => {
-    console.log(previousContext.graphqlContext.authentication);
-    return {
-      ...previousContext,
-      headers: {
-        authentication: JSON.stringify(previousContext.graphqlContext.authentication),
-      },
-    };
-  });
-  const ProfileLink = new HttpLink({
-    uri: 'http://localhost:4100/graphql',
-    fetch,
-  });
-  const ProfileSchema = makeRemoteExecutableSchema({
-    schema: await introspectSchema(ProfileLink),
-    link: ApolloLink.from([ContextLink, ProfileLink]),
-  });
-
   // A small string schema extensions to add links between schemas
   const LinkSchema = `
     extend type Booking {
@@ -70,10 +52,33 @@ export async function makeMergedSchema() {
     }
   `;
 
+  const schemas = [PropertySchema, BookingSchema, LinkSchema];
+
+  try {
+    const ContextLink = setContext((request, previousContext) => ({
+        ...previousContext,
+        headers: {
+          authentication: JSON.stringify(previousContext.graphqlContext.authentication),
+        },
+      }));
+    const ProfileLink = new HttpLink({
+      uri: 'http://localhost:4100/graphql',
+      fetch,
+    });
+    const ProfileSchema = makeRemoteExecutableSchema({
+      schema: await introspectSchema(ProfileLink),
+      link: ApolloLink.from([ContextLink, ProfileLink]),
+    });
+    schemas.push(ProfileSchema);
+  } catch (e) {
+    // skip localhost
+    console.error(e);
+  }
+
   // merge actual schema
   const mergedSchema = mergeSchemas({
     // schemas: [PropertySchema, BookingSchema, LinkSchema],
-    schemas: [PropertySchema, BookingSchema, LinkSchema, ProfileSchema],
+    schemas,
     // Define resolvers manually for links
     resolvers: {
       Property: {

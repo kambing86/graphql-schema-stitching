@@ -20,7 +20,14 @@ const app = express();
   } catch (e) {
     console.error(e);
   }
-  // app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
+  app.use('/resetSchema', async (_, res) => {
+    try {
+      schema = await makeMergedSchema();
+    } catch (e) {
+      console.error(e);
+    }
+    res.json(true);
+  });
   app.use('/graphql', bodyParser.json(), graphqlExpress((req) => {
     const token = getToken(req);
     const authentication = decode(token);
