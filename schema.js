@@ -56,11 +56,11 @@ export async function makeMergedSchema() {
 
   try {
     const ContextLink = setContext((request, previousContext) => ({
-        ...previousContext,
-        headers: {
-          authentication: JSON.stringify(previousContext.graphqlContext.authentication),
-        },
-      }));
+      ...previousContext,
+      headers: {
+        authentication: JSON.stringify(previousContext.graphqlContext.authentication),
+      },
+    }));
     const ProfileLink = new HttpLink({
       uri: 'http://localhost:4100/graphql',
       fetch,
